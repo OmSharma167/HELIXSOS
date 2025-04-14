@@ -46,7 +46,7 @@ function App() {
       <AuthProvider>
         <Header />
 
-        <div className="p-1 mt-16">
+        <div className="p-1">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />

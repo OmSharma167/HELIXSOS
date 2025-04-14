@@ -67,7 +67,7 @@ const PharmacyLocator = () => {
   };
 
   return (
-    <div className=" mx-auto ">
+    <div className=" mx-auto mt-16 p-4 bg-gray-50 ">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8 p-6 shadow-lg rounded-lg border border-gray-300">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
