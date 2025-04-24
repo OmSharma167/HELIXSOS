@@ -1,15 +1,9 @@
-
-
-
-
-
-
 import React, { useRef, useEffect, useState } from "react";
 import io from "socket.io-client";
 import { motion } from "framer-motion";
 import { Video, Phone, Calendar } from "lucide-react";
-import Layout from "../Layout/Layout";  // Make sure Layout has the header and footer correctly structured
-import DoctorList from "../Admin/DoctorList"; // Move DoctorList out of header
+import Layout from "../Layout/Layout"; // Make sure Layout has the header and footer correctly structured
+import DoctorList from "../Doctor/DoctorList"; // Move DoctorList out of header
 
 const SOCKET_SERVER_URL = "http://localhost:5000"; // Replace with your actual server URL
 
@@ -40,7 +34,9 @@ const VideoConsultation = () => {
   const setupWebRTCSignaling = () => {
     socketRef.current.on("offer", async (offer) => {
       console.log("Received offer:", offer);
-      await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+      await peerConnection.current.setRemoteDescription(
+        new RTCSessionDescription(offer)
+      );
       const answer = await peerConnection.current.createAnswer();
       await peerConnection.current.setLocalDescription(answer);
       socketRef.current.emit("answer", answer);
@@ -48,12 +44,16 @@ const VideoConsultation = () => {
 
     socketRef.current.on("answer", async (answer) => {
       console.log("Received answer:", answer);
-      await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+      await peerConnection.current.setRemoteDescription(
+        new RTCSessionDescription(answer)
+      );
     });
 
     socketRef.current.on("ice-candidate", async (candidate) => {
       console.log("Received ICE candidate:", candidate);
-      await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+      await peerConnection.current.addIceCandidate(
+        new RTCIceCandidate(candidate)
+      );
     });
   };
 
@@ -61,52 +61,53 @@ const VideoConsultation = () => {
     setCallActive(true);
 
     // Request access to camera and microphone
-    navigator.mediaDevices.getUserMedia({ 
-      video: { 
-        width: { ideal: 1280 }, 
-        height: { ideal: 720 },  
-        facingMode: "user"  
-      },
-      audio: true 
-    })
-    .then((stream) => {
-      console.log("Media stream acquired");
-      localVideoRef.current.srcObject = stream;  // Set the local video stream
+    navigator.mediaDevices
+      .getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user",
+        },
+        audio: true,
+      })
+      .then((stream) => {
+        console.log("Media stream acquired");
+        localVideoRef.current.srcObject = stream; // Set the local video stream
 
-      // Initialize PeerConnection and add local stream tracks
-      const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" } 
-        ]
+        // Initialize PeerConnection and add local stream tracks
+        const pc = new RTCPeerConnection({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        peerConnection.current = pc;
+
+        // Handle remote stream
+        pc.ontrack = (event) => {
+          console.log("Remote stream received");
+          remoteVideoRef.current.srcObject = event.streams[0];
+        };
+
+        // ICE candidate handling
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            console.log("Sending ICE candidate", event.candidate);
+            socketRef.current.emit("ice-candidate", event.candidate);
+          }
+        };
+
+        // Create and send offer if initiating call
+        pc.createOffer().then((offer) => {
+          console.log("Sending offer", offer);
+          pc.setLocalDescription(offer);
+          socketRef.current.emit("offer", offer);
+        });
+      })
+      .catch((error) => {
+        console.error("Error accessing media devices.", error);
+        alert(
+          "Error accessing your camera or microphone. Please check permissions."
+        );
       });
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream)); 
-      peerConnection.current = pc;
-
-      // Handle remote stream
-      pc.ontrack = (event) => {
-        console.log("Remote stream received");
-        remoteVideoRef.current.srcObject = event.streams[0];
-      };
-
-      // ICE candidate handling
-      pc.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log("Sending ICE candidate", event.candidate);
-          socketRef.current.emit("ice-candidate", event.candidate);
-        }
-      };
-
-      // Create and send offer if initiating call
-      pc.createOffer().then((offer) => {
-        console.log("Sending offer", offer);
-        pc.setLocalDescription(offer);
-        socketRef.current.emit("offer", offer);
-      });
-    })
-    .catch((error) => {
-      console.error("Error accessing media devices.", error);
-      alert("Error accessing your camera or microphone. Please check permissions.");
-    });
   };
 
   return (
@@ -129,14 +130,17 @@ const VideoConsultation = () => {
           {/* Video Consultation Content */}
           <div className="sm:p-4">
             <p className="text-lg text-gray-600 mb-8 text-center mx-auto">
-              Stay safe at home while receiving top-quality medical care: online video visits and phone appointments with certified physicians. It's safe, secure, and with all the same privacy as a physical visit.
+              Stay safe at home while receiving top-quality medical care: online
+              video visits and phone appointments with certified physicians.
+              It's safe, secure, and with all the same privacy as a physical
+              visit.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3">
               {[
                 { icon: Video, text: "High-quality video calls" },
                 { icon: Phone, text: "Phone consultations available" },
-                { icon: Calendar, text: "Flexible scheduling" }
+                { icon: Calendar, text: "Flexible scheduling" },
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -161,29 +165,28 @@ const VideoConsultation = () => {
             {callActive && (
               <div className="mt-8">
                 <div className="grid grid-cols-2 gap-4">
-                  <video ref={localVideoRef} autoPlay muted className="w-full h-64 bg-black" />
-                  <video ref={remoteVideoRef} autoPlay className="w-full h-64 bg-black" />
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    muted
+                    className="w-full h-64 bg-black"
+                  />
+                  <video
+                    ref={remoteVideoRef}
+                    autoPlay
+                    className="w-full h-64 bg-black"
+                  />
                 </div>
               </div>
             )}
           </div>
         </motion.div>
-
-       
-       
       </div>
-
-      
-        
-      
     </Layout>
-     
   );
 };
 
 export default VideoConsultation;
-
-
 
 // // ChatApp.js
 
@@ -193,11 +196,11 @@ export default VideoConsultation;
 
 // function VideoConsultation({ doctorId, userId }) {
 //   const socket = useMemo(() => io("http://localhost:3000"), []);
-  
+
 //   const [message, setMessage] = useState("");
 //   const [messages, setMessages] = useState([]);
 //   const [socketID, setSocketId] = useState("");
-  
+
 //   useEffect(() => {
 //     socket.on("connect", () => {
 //       setSocketId(socket.id);
