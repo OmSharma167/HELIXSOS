@@ -47,13 +47,11 @@ import AmbulanceDashboard from "./components/Ambulance/AmbulanceDashboard";
 
 function App() {
   return (
-    
-
     <Router>
       <AuthProvider>
         <div className="flex flex-col min-h-screen">
-          <Header />
           <main className="flex-grow p-1">
+            <Header />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
